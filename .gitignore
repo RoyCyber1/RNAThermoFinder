@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Data - Don't commit output files
+Data/Outputs/*
+!Data/Outputs/.gitkeep
+Data/Inputs/*.fasta
+Data/Inputs/*.csv
+Data/Inputs/*.tsv
+*.csv
+*.svg
+*.png
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+*.tmp
+*.log
