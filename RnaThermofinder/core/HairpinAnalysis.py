@@ -7,8 +7,8 @@ import csv
 # ✨ NEW: Import for composition and CSV building
 import sys
 
-from utils.analysis_helpers import calculate_composition
-from utils.analysis_helpers import build_csv_row
+from RnaThermofinder.utils.analysis_helpers import calculate_composition
+from RnaThermofinder.utils.analysis_helpers import build_csv_row
 from settings_manager import SettingsManager
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
