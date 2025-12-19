@@ -8,9 +8,9 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="RNAThermoFinder",
-    version="1.0.0",
-    author="Your Name",
-    author_email="your.email@university.edu",
+    version="2.0.0",
+    author="Roy Vaknin",
+    author_email="roycyber13@gmail.com",
     description="A tool for identifying RNA thermometers in bacterial sequences",
     long_description=long_description,
     long_description_content_type="text/markdown",

@@ -1,0 +1,56 @@
+{
+    "csv_output_columns": {
+        "name": true,
+        "original_sequence": true,
+        "original_structure": true,
+        "original_mfe_25": true,
+        "original_mfe_37": true,
+        "original_mfe_42": true,
+        "original_au_percent": true,
+        "original_gc_percent": true,
+        "original_gu_percent": true,
+        "original_mfe_25_in_range": true,
+        "original_mfe_37_in_range": true,
+        "original_mfe_42_in_range": true,
+        "original_au_in_range": true,
+        "original_gc_in_range": true,
+        "original_gu_in_range": true,
+        "hairpin_sequence": true,
+        "hairpin_structure": true,
+        "hairpin_au_percent": true,
+        "hairpin_gc_percent": true,
+        "hairpin_gu_percent": true,
+        "mfe_25c_hairpin": true,
+        "mfe_37c_hairpin": true,
+        "mfe_42c_hairpin": true,
+        "mfe_25_in_range_hairpin": true,
+        "mfe_37_in_range_hairpin": true,
+        "mfe_42_in_range_hairpin": true,
+        "au_in_range_hairpin": true,
+        "gc_in_range_hairpin": true,
+        "gu_in_range_hairpin": true,
+        "rbs_sequence": true,
+        "rbs_structure": true,
+        "rbs_paired_percent": true,
+        "quality_score_hairpin": true,
+        "quality_score_original": true
+    },
+    "calculation_settings": {
+        "calculate_original_mfe_temps": true,
+        "calculate_original_composition": true,
+        "calculate_original_range_checks": false,
+        "calculate_hairpin_composition": true,
+        "calculate_hairpin_mfe_temps": true,
+        "calculate_rbs": true
+    },
+    "sequence_processing": {
+        "append_sequence_enabled": false,
+        "append_sequence": "",
+        "append_position": "end"
+    },
+    "output_preferences": {
+        "default_output_dir": "Data/Outputs",
+        "create_structures_subdir": true,
+        "auto_open_csv": false
+    }
+}

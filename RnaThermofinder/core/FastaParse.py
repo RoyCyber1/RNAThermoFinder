@@ -47,6 +47,7 @@ def validate_sequence(sequence: str, allowed_chars: str = "ACGU") -> bool:
 def read_fasta(path: str, convert_to_rna: bool = True, validate: bool = False) -> List[Tuple[str, str]]:
     """
     Parse a FASTA file and return list of (header, sequence) tuples
+    Supports standard '>' and Unicode '›' '‹' header markers
 
     Args:
         path: Path to FASTA file
@@ -67,8 +68,9 @@ def read_fasta(path: str, convert_to_rna: bool = True, validate: bool = False) -
     sequences = []
     header = None
     seq = ""
+    HEADER_MARKERS = ['>', '›', '‹']  # Standard and Unicode variants
 
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding='utf-8') as f:  # Added UTF-8 encoding
         for line_num, line in enumerate(f, 1):
             line = line.strip()
 
@@ -76,7 +78,10 @@ def read_fasta(path: str, convert_to_rna: bool = True, validate: bool = False) -
             if not line or line.startswith(";"):
                 continue
 
-            if line.startswith(">"):
+            # Check if line starts with any header marker
+            is_header = any(line.startswith(marker) for marker in HEADER_MARKERS)
+
+            if is_header:
                 # Save previous sequence if exists
                 if header is not None:
                     if seq:
@@ -86,13 +91,14 @@ def read_fasta(path: str, convert_to_rna: bool = True, validate: bool = False) -
                             if not validate_sequence(seq, allowed):
                                 invalid = set(seq.upper()) - set(allowed)
                                 print(f"Warning: Invalid Chars '{header}', skipping.")
-
-
-                        sequences.append((header, seq))
+                            else:
+                                sequences.append((header, seq))
+                        else:
+                            sequences.append((header, seq))
                     else:
                         print(f"Warning: Empty sequence for header '{header}', skipping.")
 
-                header = line[1:].strip()  # Remove '>' and whitespace
+                header = line[1:].strip()  # Remove first character (any marker) and whitespace
                 seq = ""
 
             else:
@@ -115,8 +121,10 @@ def read_fasta(path: str, convert_to_rna: bool = True, validate: bool = False) -
                     if not validate_sequence(seq, allowed):
                         invalid = set(seq.upper()) - set(allowed)
                         print(f"Warning: Invalid Chars '{header}', skipping.")
-
-                sequences.append((header, seq))
+                    else:
+                        sequences.append((header, seq))
+                else:
+                    sequences.append((header, seq))
             else:
                 print(f"Warning: Empty sequence for header '{header}', skipping.")
 
@@ -124,7 +132,6 @@ def read_fasta(path: str, convert_to_rna: bool = True, validate: bool = False) -
         raise ValueError(f"No sequences found in {path}")
 
     return sequences
-
 
 def write_fasta(sequences: List[Tuple[str, str]], output_path: str,
                 line_width: int = 80) -> None:

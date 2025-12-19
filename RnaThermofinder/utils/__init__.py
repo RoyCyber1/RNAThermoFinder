@@ -1,5 +1,5 @@
 """Utility functions"""
 
-from . import svg_png_coversion
+from utils import analysis_helpers
 
-__all__ = ['svg_png_coversion']
+__all__ = ['analysis_helpers']

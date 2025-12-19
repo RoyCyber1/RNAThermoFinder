@@ -3,12 +3,16 @@ import threading
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, ttk, messagebox, scrolledtext
-from .settings_dialog import SettingsDialog
+from .settings_dialog import SettingsDialog  # Your existing analysis settings
+from .sequence_settings_dialog import SequenceSettingsDialog
 
-# Import from core - use relative imports
-#from ..core import FastaParse
-#from ..core import HairpinAnalysis
+# ✨ NEW: Import CSV output settings (note the different name)
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # Add project root to path
+from settings_manager import SettingsManager
+from .settings_dialog_csv import SettingsDialog_CSV
 
+# Import from core
 from RnaThermofinder.core import FastaParse
 from RnaThermofinder.core import HairpinAnalysis
 
@@ -19,8 +23,11 @@ class RNAThermoFinderGUI:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("RNA Thermometer Finder")
-        self.root.geometry("900x500")
+        self.root.title("RNA Thermometer Finder v2.0.0")
+        self.root.geometry("1000x500")
+
+        #Theme
+        self._apply_light_theme()
 
         # State variables
         self.sequences = []
@@ -34,6 +41,8 @@ class RNAThermoFinderGUI:
             'mfe_42_min': -7, 'mfe_42_max': -2,
         }
         self.status_var= tk.StringVar(value="Ready")
+        # ✨ NEW: CSV output settings manager
+        self.csv_settings_manager = SettingsManager("csv_output_settings.json")
 
         # Set output directory (use absolute path)
         project_root = Path(__file__).parent.parent.parent
@@ -54,41 +63,82 @@ class RNAThermoFinderGUI:
             self.log("✓ Settings updated")
 
     def _create_widgets(self):
-        """Create and layout all widgets"""
+        # Professional header with dark background
+        header_frame = tk.Frame(self.root, bg=self.colors['header_bg'], height=55)
+        header_frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
+        header_frame.grid_propagate(False)
+
+        # Title
+        title_label = tk.Label(
+            header_frame,
+            text="RNA Thermometer Finder",
+            font=("Segoe UI", 16, "bold"),
+            bg=self.colors['header_bg'],
+            fg=self.colors['header_fg']
+        )
+        title_label.pack(side=tk.LEFT, padx=20, pady=12)
+
+        # Subtitle/Version
+        subtitle_label = tk.Label(
+            header_frame,
+            text="Bioinformatics Analysis Tool  •  v1.0",
+            font=("Segoe UI", 9),
+            bg=self.colors['header_bg'],
+            fg='#95a5a6'
+        )
+        subtitle_label.pack(side=tk.LEFT, padx=5)
+
         # Main frame
-        main_frame = ttk.Frame(self.root, padding="10")
-        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        main_frame = ttk.Frame(self.root, padding="15")
+        main_frame.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         # Configure grid weights for resizing
         self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
+        self.root.rowconfigure(1, weight=1)
         main_frame.columnconfigure(1, weight=1)
-        main_frame.rowconfigure(1, weight=1)
+        main_frame.rowconfigure(2, weight=1)  # Changed from 1 to 2
 
-        # File selection section
-        ttk.Label(main_frame, text="Input File:", font=("Arial", 10, "bold")).grid(
-            row=0, column=0, sticky=tk.W, pady=(0, 10)
+        # File selection section with better styling
+        file_label = ttk.Label(
+            main_frame,
+            text="Input File:",
+            font=("Segoe UI", 10, "bold")
         )
+        file_label.grid(row=0, column=0, sticky=tk.W, pady=(0, 10))
+
         self.file_path_var = tk.StringVar()
-        ttk.Entry(main_frame, textvariable=self.file_path_var, width=60).grid(
-            row=0, column=1, sticky=(tk.W, tk.E), padx=5
-        )
-        ttk.Button(main_frame, text="Browse", command=self.browse_file).grid(
-            row=0, column=2, padx=(5, 0)
-        )
+        file_entry = ttk.Entry(main_frame, textvariable=self.file_path_var, width=60)
+        file_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=5)
 
-        # Results display with scrollbar
-        ttk.Label(main_frame, text="Analysis Output:", font=("Arial", 10, "bold")).grid(
-            row=1, column=0, sticky=tk.NW, pady=(10, 5)
-        )
+        browse_btn = ttk.Button(main_frame, text="Browse", command=self.browse_file)
+        browse_btn.grid(row=0, column=2, padx=(5, 0))
 
+        # Results display label
+        results_label = ttk.Label(
+            main_frame,
+            text="Analysis Output:",
+            font=("Segoe UI", 10, "bold")
+        )
+        results_label.grid(row=1, column=0, sticky=tk.NW, pady=(15, 5))
+
+        # Use ScrolledText for automatic scrollbar
         # Use ScrolledText for automatic scrollbar
         self.results_text = scrolledtext.ScrolledText(
             main_frame,
             height=30,
             width=90,
             wrap=tk.WORD,
-            font=("Courier", 9)
+            font=("Consolas", 9),  # Monospace for sequences
+            bg=self.colors['entry_bg'],
+            fg=self.colors['fg'],
+            insertbackground=self.colors['accent'],
+            selectbackground=self.colors['select_bg'],
+            selectforeground='#ffffff',
+            relief='solid',
+            borderwidth=1,
+            highlightthickness=0,
+            padx=8,
+            pady=8
         )
         self.results_text.grid(
             row=2, column=0, columnspan=3,
@@ -101,6 +151,11 @@ class RNAThermoFinderGUI:
         button_frame.grid(row=3, column=0, columnspan=3, pady=10)
 
         # Buttons
+        # Button frame with better spacing
+        button_frame = ttk.Frame(main_frame)
+        button_frame.grid(row=3, column=0, columnspan=3, pady=15)
+
+        # Buttons with icons
         self.analyze_btn = ttk.Button(
             button_frame,
             text="🧬 Analyze",
@@ -122,37 +177,162 @@ class RNAThermoFinderGUI:
         )
         self.export_btn.pack(side=tk.LEFT, padx=5)
 
+        # Separator for settings buttons
+        separator = ttk.Separator(button_frame, orient=tk.VERTICAL)
+        separator.pack(side=tk.LEFT, fill=tk.Y, padx=15, pady=3)
+
         ttk.Button(
             button_frame,
-            text="⚙️ Settings",
+            text="⚙️ Analysis Settings",
             command=self.open_settings
+        ).pack(side=tk.LEFT, padx=5)
+
+        ttk.Button(
+            button_frame,
+            text="📊 CSV Output",
+            command=self.open_csv_settings
+        ).pack(side=tk.LEFT, padx=5)
+
+        ttk.Button(
+            button_frame,
+            text="🧬 Sequence Options",
+            command=self.open_sequence_settings
         ).pack(side=tk.LEFT, padx=5)
 
         # Progress bar
         self.progress = ttk.Progressbar(main_frame, mode='indeterminate')
         self.progress.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(10, 0))
 
-        # Status bar
-        status_bar = ttk.Label(
-            self.root,
+        # 🎨 REPLACE YOUR OLD STATUS BAR CODE WITH THIS:
+        # Status bar with clean styling
+        self.status_frame = tk.Frame(self.root, bg=self.colors['entry_bg'])
+        self.status_frame.grid(row=2, column=0, sticky=(tk.W, tk.E))
+
+        status_bar = tk.Label(
+            self.status_frame,
             textvariable=self.status_var,
-            relief=tk.SUNKEN,
-            anchor=tk.W
+            relief=tk.FLAT,
+            anchor=tk.W,
+            bg=self.colors['entry_bg'],
+            fg=self.colors['fg'],
+            font=('Segoe UI', 9),
+            padx=15,
+            pady=8,
+            borderwidth=1,
+            bd=0
         )
-        status_bar.grid(row=1, column=0, sticky=(tk.W, tk.E))
+        status_bar.pack(fill=tk.X)
+
+        # Add subtle top border
+        separator = tk.Frame(self.status_frame, height=1, bg=self.colors['border'])
+        separator.pack(fill=tk.X, side=tk.TOP)
+
     def _create_menu(self):
         """Create menu bar"""
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
 
+        # File menu
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Open", command=self.browse_file)
         file_menu.add_command(label="Export Results", command=self.export_results)
-        file_menu.add_command(label="Settings", command=self.open_settings)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
 
+        # Settings menu
+        settings_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Settings", menu=settings_menu)
+        settings_menu.add_command(label="⚙️ Analysis Settings", command=self.open_settings)
+        settings_menu.add_command(label="📊 CSV Output", command=self.open_csv_settings)
+        settings_menu.add_command(label="🧬 Sequence Options", command=self.open_sequence_settings)
+
+    def _apply_light_theme(self):
+        """Apply professional scientific light theme"""
+
+        # Color scheme - Clean scientific interface (like NCBI, Ensembl)
+        self.colors = {
+            'bg': '#ffffff',  # Pure white background
+            'fg': '#2c3e50',  # Dark blue-gray text
+            'accent': '#2980b9',  # Professional blue (scientific tools)
+            'button_bg': '#ecf0f1',  # Light gray buttons
+            'button_fg': '#2c3e50',  # Dark text on buttons
+            'entry_bg': '#f8f9fa',  # Very light gray for inputs
+            'entry_fg': '#2c3e50',  # Dark text
+            'select_bg': '#3498db',  # Bright blue selection
+            'border': '#bdc3c7',  # Medium gray borders
+            'error': '#e74c3c',  # Clear red for errors
+            'success': '#27ae60',  # Scientific green
+            'warning': '#f39c12',  # Orange warning
+            'highlight': '#16a085',  # Teal for RNA/DNA
+            'header_bg': '#34495e',  # Dark header background
+            'header_fg': '#ffffff'  # White header text
+        }
+
+        # Configure root window
+        self.root.configure(bg=self.colors['bg'])
+
+        # Configure ttk styles
+        style = ttk.Style()
+        style.theme_use('clam')
+
+        # Configure TFrame
+        style.configure('TFrame', background=self.colors['bg'])
+
+        # Configure TLabel - Professional, readable
+        style.configure('TLabel',
+                        background=self.colors['bg'],
+                        foreground=self.colors['fg'],
+                        font=('Segoe UI', 10))
+
+        # Configure TButton - Clean, professional
+        style.configure('TButton',
+                        background=self.colors['button_bg'],
+                        foreground=self.colors['button_fg'],
+                        borderwidth=1,
+                        bordercolor=self.colors['border'],
+                        focuscolor=self.colors['accent'],
+                        font=('Segoe UI', 9, 'bold'),
+                        padding=8,
+                        relief='raised')
+
+        style.map('TButton',
+                  background=[('active', self.colors['accent']),
+                              ('pressed', '#2471a3'),
+                              ('disabled', '#e0e0e0')],
+                  foreground=[('active', '#ffffff'),
+                              ('pressed', '#ffffff'),
+                              ('disabled', '#95a5a6')])
+
+        # Configure TEntry
+        style.configure('TEntry',
+                        fieldbackground=self.colors['entry_bg'],
+                        foreground=self.colors['entry_fg'],
+                        insertcolor=self.colors['accent'],
+                        borderwidth=1,
+                        relief='solid',
+                        bordercolor=self.colors['border'])
+
+        # Configure TProgressbar - Professional blue
+        style.configure('TProgressbar',
+                        background=self.colors['accent'],
+                        troughcolor=self.colors['entry_bg'],
+                        borderwidth=1,
+                        bordercolor=self.colors['border'],
+                        thickness=8)
+
+        # Configure LabelFrame
+        style.configure('TLabelframe',
+                        background=self.colors['bg'],
+                        foreground=self.colors['accent'],
+                        borderwidth=1,
+                        relief='solid',
+                        bordercolor=self.colors['border'])
+
+        style.configure('TLabelframe.Label',
+                        background=self.colors['bg'],
+                        foreground=self.colors['accent'],
+                        font=('Segoe UI', 10, 'bold'))
 
     def browse_file(self):
         """Open file dialog for sequence selection"""
@@ -195,6 +375,25 @@ class RNAThermoFinderGUI:
         self.sequences = []
         self.status_var.set("Ready")
         self.export_btn.config(state=tk.DISABLED)
+
+    def open_csv_settings(self):
+        """Open CSV output settings dialog"""
+        dialog = SettingsDialog_CSV(self.root, self.csv_settings_manager)
+        dialog.show()
+        # Settings are automatically saved when user clicks "Save Settings"
+        self.log("✓ CSV output settings available")
+
+    def open_sequence_settings(self):
+        """Open sequence processing settings dialog"""
+        try:
+            csv_settings = SettingsManager("csv_output_settings.json")
+            dialog = SequenceSettingsDialog(self.root, csv_settings)
+            dialog.show()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to open sequence settings: {e}")
+
+
+
 
     def run_analysis(self):
         """Execute RNA thermometer analysis in a separate thread"""
@@ -252,7 +451,8 @@ class RNAThermoFinderGUI:
                 self.sequences,
                 self.output_dir,
                 self.analysis_settings,
-                self.log  # ← Pass function reference, not self.log()
+                self.log,  # ← Pass function reference, not self.log()
+                self.csv_settings_manager
             )
 
             self.status_var.set(f"✅ Analysis complete! Processed {len(self.sequences)} sequences")

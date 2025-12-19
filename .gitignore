@@ -8,12 +8,24 @@ __pycache__/
 dist/
 build/
 *.egg
+*.spec
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
 
 # PyCharm
 .idea/
+*.iml
 
 # VS Code
 .vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
 
 # Data - Don't commit output files
 Data/Outputs/*
@@ -25,10 +37,27 @@ Data/Inputs/*.tsv
 *.svg
 *.png
 
+# Built applications - Don't commit (too large)
+*.zip
+*.dmg
+*.exe
+*.app/
+
 # OS
 .DS_Store
+.AppleDouble
+.LSOverride
 Thumbs.db
+Desktop.ini
 
 # Temporary
 *.tmp
 *.log
+*.cache
+
+# PyInstaller
+*.spec
+
+# Test outputs
+test_output/
+temp/
